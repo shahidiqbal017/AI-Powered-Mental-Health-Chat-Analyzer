@@ -1,36 +1,36 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from transformers import pipeline
+import torch
 
 app = Flask(__name__)
 
-# Load sentiment and emotion models
-sentiment_analyzer = pipeline("sentiment-analysis")
-emotion_classifier = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base", top_k=1)
+# Sentiment model
+sentiment_model = pipeline("sentiment-analysis")
 
-@app.route('/analyze', methods=['POST'])
+# Emotion model
+emotion_model = pipeline("text-classification", 
+                         model="j-hartmann/emotion-english-distilroberta-base", 
+                         return_all_scores=False)
+
+# Serve the index.html page
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+# API endpoint for analysis
+@app.route("/analyze", methods=["POST"])
 def analyze():
-    user_message = request.json['message']
+    data = request.get_json()
+    message = data.get("message", "")
 
-    # Analyze sentiment
-    sentiment = sentiment_analyzer(user_message)[0]
-
-    # Analyze emotion
-    emotion = emotion_classifier(user_message)[0][0]
-
-    # Generate response
-    if sentiment['label'] == 'NEGATIVE' or emotion['label'] in ['sadness', 'fear', 'anger']:
-        if sentiment['score'] > 0.9:
-            response = "I'm sensing you're going through a tough time. Would you like to talk to a counselor?"
-        else:
-            response = "It's okay to feel this way. Try deep breathing. You're not alone."
-    else:
-        response = "I'm glad you're feeling okay! Stay positive. 😊"
+    sentiment = sentiment_model(message)[0]
+    emotion = emotion_model(message)[0]
 
     return jsonify({
+        "response": "Thank you for sharing. I'm here for you.",
         "sentiment": sentiment,
-        "emotion": emotion,
-        "response": response
+        "emotion": emotion
     })
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

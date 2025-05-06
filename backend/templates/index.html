@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Mental Health Chat Analyzer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #83a4d4, #b6fbff);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #333;
+        }
+
+        #chatbox {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin: 8px 0;
+        }
+
+        .user {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .ai {
+            color: #28a745;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .input-area {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h2>🧠 Mental Health Chat Analyzer</h2>
+        <div id="chatbox"></div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Type your message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const input = document.getElementById("userInput");
+            const chatbox = document.getElementById("chatbox");
+            const msg = input.value.trim();
+
+            if (msg === "") return;
+
+            chatbox.innerHTML += `<div class="message"><span class="user">You:</span> ${msg}</div>`;
+            input.value = "";
+
+            fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg })
+            })
+            .then(res => res.json())
+            .then(data => {
+                chatbox.innerHTML += `
+                    <div class="message"><span class="ai">AI:</span> ${data.response}
+                    <br><small><i>Emotion: ${data.emotion.label}, Sentiment: ${data.sentiment.label}</i></small></div>`;
+                chatbox.scrollTop = chatbox.scrollHeight;
+            })
+            .catch(err => {
+                chatbox.innerHTML += `<div class="message"><span class="ai">AI:</span> Something went wrong.</div>`;
+            });
+        }
+    </script>
+</body>
+</html>
